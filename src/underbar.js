@@ -57,12 +57,12 @@
   _.each = function(collection, iterator) {
     if (Array.isArray(collection)) {
       // iterate through collection array
-      for (let i = 0; i < collection.length; i++) {
+      for (var i = 0; i < collection.length; i++) {
         // use iterator on each value
         iterator(collection[i], i, collection);
       }
     } else {
-      for (let key in collection) {
+      for (var key in collection) {
         iterator(collection[key], key, collection);
       }
     }
@@ -113,7 +113,7 @@
     //Brian's code------------------------
     //iterate each element
     //return new array that was iterated
-    let answer = [];
+    var answer = [];
 
     _.each(collection, function(item) {
       if (test(item)) {
@@ -152,8 +152,8 @@
   _.uniq = function(array, isSorted, iterator) {
     // Fernando's Code ------------------
     // declare variable result
-    let result = [];
-    let iteratorTest = [];
+    var result = [];
+    var iteratorTest = [];
     // iterate through array collection
     _.each(array, function(currentValue, index, collection) {
       // if test is not undefined
@@ -207,7 +207,7 @@
 
     // Fernando's Code -----------------------------
     // delcare result variable
-    let result = [];
+    var result = [];
     // iterate array
     _.each(collection, function(currentValue, index, collection) {
       // push iterator value into result
@@ -266,15 +266,25 @@
   //   }); // should be 5, regardless of the iterator function passed in
   //          No accumulator is given so the first element is used.
   _.reduce = function(collection, iterator, accumulator) {
-
+    // Fernando's Code ----------
     // if accumulator is undefined
+    if (accumulator === undefined) {
       // accumulator is equal to first value
+      accumulator = collection[0];
+      // collection is sliced out of first value
+      collection = collection.slice(1);
+    }
+    // iterate through collection array OR object
+    for (var key in collection) {
+      // make iterator function equal accumulator
+      accumulator = iterator(accumulator, collection[key]);
+    }
+    // return accumulator array
+    return accumulator;
 
-    // declare result array
 
-    // if array
 
-    // if object
+
 
     //declare variable
     //set variable to accumulator if exists
@@ -300,12 +310,45 @@
   // Determine whether all of the elements match a truth test.
   _.every = function(collection, iterator) {
     // TIP: Try re-using reduce() here.
+
+    // Fernando's Code ----------
+    // iterate collection array
+    return _.reduce(collection, function(accumulator, currentValue, collection) {
+      // if iterator is defined
+      if (iterator !== undefined) {
+        // if iterator value does not equal true
+        if (!iterator(currentValue)) {
+          // return false
+          return false;
+        }
+      } else { // otherwise
+        // check if current value is false
+        if (currentValue === false) {
+          // return false
+          return false;
+        }
+      }
+      // return accumulator
+      return accumulator;
+    }, true);
   };
 
   // Determine whether any of the elements pass a truth test. If no iterator is
   // provided, provide a default one
   _.some = function(collection, iterator) {
     // TIP: There's a very clever way to re-use every() here.
+
+    // Fernando's Code ----------
+    // retrun every as not while iterating through array
+    return !_.every(collection, function(currentValue, index, collection) {
+      // if a iterator exist AND current iterator value is not equal true OR current value is not equal true
+      if ((iterator !== undefined && !iterator(currentValue)) || !currentValue === true) {
+        // return true
+        return true;
+      }
+    });
+    // return false
+    return false;
   };
 
 
@@ -328,11 +371,44 @@
   //     bla: "even more stuff"
   //   }); // obj1 now contains key1, key2, key3 and bla
   _.extend = function(obj) {
+    // Fernando's Code ---------
+    // declare arguments
+    var args = Array.prototype.slice.call(arguments);
+    // skip first argument
+    args = args.slice(1);
+    // iterate through arguments array
+    return _.reduce(args, function(accumulator, currentValue, collection) {
+      // iterate through each object
+      for (var key in currentValue) {
+        // create properties in object from each argument
+        accumulator[key] = currentValue[key];
+      }
+      // return accumulator
+      return accumulator;
+    }, obj); // accumulator equals to first input
   };
 
   // Like extend, but doesn't ever overwrite a key that already
   // exists in obj
   _.defaults = function(obj) {
+    // Fernando's Code ---------
+    // declare arguments
+    var args = Array.prototype.slice.call(arguments);
+    // skip first argument
+    args = args.slice(1);
+    // iterate through arguments array
+    return _.reduce(args, function(accumulator, currentValue, collection) {
+      // iterate through each object
+      for (let key in currentValue) {
+        // if key does not exist
+        if (accumulator[key] === undefined) {
+          // create properties in object from each argument
+          accumulator[key] = currentValue[key];
+        }
+      }
+      // return accumulator
+      return accumulator;
+    }, obj); // accumulator equals to first input
   };
 
 
@@ -376,6 +452,22 @@
   // already computed the result for the given argument and return that value
   // instead if possible.
   _.memoize = function(func) {
+    // Fernando's Code ----------
+    // declare result object
+    var result = {};
+
+    return function() {
+      // create array from arguments and make them into string
+      var args = JSON.stringify(Array.prototype.slice.call(arguments));
+
+      // if the string args doesnt exist as key in result obj
+      if (!result[args]) {
+        // create the key and assing its value to the func with all arguments passed back as objects/arrays
+        result[args] = func.apply(this, JSON.parse(args));
+      }
+      // return the func value
+      return result[args];
+    };
   };
 
   // Delays a function for the given number of milliseconds, and then calls
@@ -385,6 +477,18 @@
   // parameter. For example _.delay(someFunction, 500, 'a', 'b') will
   // call someFunction('a', 'b') after 500ms
   _.delay = function(func, wait) {
+    // Fernando's Code ----------
+    // declare args
+    var args = Array.prototype.slice.call(arguments);
+    // slice the array to start at index 2 and on
+    args = args.slice(2);
+    // use seTimeOut
+    setTimeout(function() {
+      // apply all arguments in array to function using apply()
+      var run = func.apply(this, args);
+      // return the function
+      return run;
+    }, wait);
   };
 
 
@@ -399,6 +503,30 @@
   // input array. For a tip on how to make a copy of an array, see:
   // http://mdn.io/Array.prototype.slice
   _.shuffle = function(array) {
+    // Fernando's Code ----------
+    // clone array
+    var clone = array.slice();
+    // declare result and indexes
+    var result = [];
+    var indexes = [];
+
+    // iterate through input array length
+    for (let i = 0; i < array.length; i++) {
+      // randomize index values starting from 0 to its length
+      var random = Math.floor(Math.random() * ((array.length - 1) - 0 + 1)) + 0;
+      // if random number does not exist inside indexes array
+      if (indexes.indexOf(random) === -1) {
+        // push it to array
+        indexes.push(random);
+        // grab index of each value in array and push to result
+        result.push(array[indexes[i]]);
+      } else { // else
+        // subtract from i
+        i--;
+      }
+    }
+    // return result
+    return result;
   };
 
 
